@@ -21,3 +21,16 @@ def makeTransaction(maxValue=3):
     
     
     return {u'user One':user1Pays, u'User Two':user2Pays}
+
+txnBuffer = [makeTransaction() for i in range(30)]
+
+def updateState(txn,state):
+    
+    state = state.copy()
+    
+    for key in txn:
+        if key in state.keys():
+            state[key] += txn[key]
+        else:
+            state[key] = txn[key]
+    return state
