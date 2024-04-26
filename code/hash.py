@@ -34,3 +34,19 @@ def updateState(txn,state):
         else:
             state[key] = txn[key]
     return state
+
+
+def isValidTxn(txn,state):
+    
+    if sum(txn.values()) != 0:
+        return False
+
+    for key in txn.keys():
+        if key in state.keys():
+            acctBalance = state[key]
+        else:
+            acctBalance = 0 
+            if (acctBalance + txn[key]) < 0:
+                return False
+    return True
+    
