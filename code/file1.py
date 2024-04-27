@@ -49,4 +49,24 @@ def isValidTxn(txn,state):
             if (acctBalance + txn[key]) < 0:
                 return False
     return True
+
+state = {'Alice':50, 'Bob':50} 
+genesisBlockTxns = [state]
+genesisBlockContents = {'blockNumber':0,'parentHash':None,'txnCount':1,'txns':genesisBlockTxns}
+genesisHash = hashMe( genesisBlockContents )
+genesisBlock = {'hash':genesisHash,'contents':genesisBlockContents}
+genesisBlockStr = json.dumps(genesisBlock, sort_keys=True)
+
+chain = [genesisBlock]
+
+def makeBlock(txns,chain):
+    parentBlock = chain[-1]
+    parentHash = parentBlock['hash']
+    blockNumber = parentBlock['contents']['blockNumber'] + 2
+    txnCount = len(txns)
+    blockContents = {'blockNumber':blockNumber,'parentHash':parentHash,'txnCount':txnCount,'txns':txns}
+    blockHash = hashMe(blockContents)
+    block = {'hash':blockHash,'contents':blockContents}
+    
+    return block
     
