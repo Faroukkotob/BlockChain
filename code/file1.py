@@ -12,22 +12,20 @@ def hashMe(msg=""):
         return hashlib.sha256(str(msg).encode('utf-8')).hexdigest()  #hexdigest converts the hash to a hexadecimal representation.
 
 
+
 def makeTransaction(maxValue=3):
-    
-    sign = int(random.getrandbits(1))*2 -1 
+
+    sign = int(random.getrandbits(1))*2 - 1  
     amount = random.randint(1,maxValue)
-    user1Pays = sign * amount
-    user2Pays = -1 * user1Pays
-    
-    
-    return {u'user One':user1Pays, u'User Two':user2Pays}
+    alicePays = sign * amount
+    bobPays   = -1 * alicePays
+    return {u'Alice':alicePays,u'Bob':bobPays}
+
 
 txnBuffer = [makeTransaction() for i in range(30)]
 
 def updateState(txn,state):
-    
-    state = state.copy()
-    
+    state = state.copy() 
     for key in txn:
         if key in state.keys():
             state[key] += txn[key]
@@ -36,37 +34,64 @@ def updateState(txn,state):
     return state
 
 
+
 def isValidTxn(txn,state):
-    
+
     if sum(txn.values()) != 0:
         return False
 
     for key in txn.keys():
-        if key in state.keys():
+        if key in state.keys(): 
             acctBalance = state[key]
         else:
-            acctBalance = 0 
-            if (acctBalance + txn[key]) < 0:
-                return False
+            acctBalance = 0
+        if (acctBalance + txn[key]) < 0:
+            return False
+    
     return True
 
-state = {'Alice':50, 'Bob':50} 
+state = {u'Alice':50, u'Bob':50}  # Define the initial state
 genesisBlockTxns = [state]
-genesisBlockContents = {'blockNumber':0,'parentHash':None,'txnCount':1,'txns':genesisBlockTxns}
+genesisBlockContents = {u'blockNumber':0,u'parentHash':None,u'txnCount':1,u'txns':genesisBlockTxns}
 genesisHash = hashMe( genesisBlockContents )
-genesisBlock = {'hash':genesisHash,'contents':genesisBlockContents}
+genesisBlock = {u'hash':genesisHash,u'contents':genesisBlockContents}
 genesisBlockStr = json.dumps(genesisBlock, sort_keys=True)
 
 chain = [genesisBlock]
 
 def makeBlock(txns,chain):
     parentBlock = chain[-1]
-    parentHash = parentBlock['hash']
-    blockNumber = parentBlock['contents']['blockNumber'] + 2
-    txnCount = len(txns)
-    blockContents = {'blockNumber':blockNumber,'parentHash':parentHash,'txnCount':txnCount,'txns':txns}
-    blockHash = hashMe(blockContents)
-    block = {'hash':blockHash,'contents':blockContents}
+    parentHash  = parentBlock[u'hash']
+    blockNumber = parentBlock[u'contents'][u'blockNumber'] + 1
+    txnCount    = len(txns)
+    blockContents = {u'blockNumber':blockNumber,u'parentHash':parentHash,
+                     u'txnCount':len(txns),'txns':txns}
+    blockHash = hashMe( blockContents )
+    block = {u'hash':blockHash,u'contents':blockContents}
     
     return block
+
+blockSizeLimit = 5  
+
+while len(txnBuffer) > 0:
+    bufferStartSize = len(txnBuffer)
     
+    txnList = []
+    while (len(txnBuffer) > 0) & (len(txnList) < blockSizeLimit):
+        newTxn = txnBuffer.pop()
+        validTxn = isValidTxn(newTxn,state)
+        
+        if validTxn:         
+            txnList.append(newTxn)
+            state = updateState(newTxn,state)
+        else:
+            print("ignored transaction")
+            sys.stdout.flush()
+            continue  
+        
+    myBlock = makeBlock(txnList,chain)
+    chain.append(myBlock) 
+    
+print(chain[0])
+print(chain[1])
+print("STATE: ",state)
